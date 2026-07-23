@@ -1,0 +1,72 @@
+Enumeration:
+
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.11 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   3072 09:a9:4d:b5:d1:55:65:54:01:ee:55:c9:a3:0b:f7:fc (RSA)
+|   256 72:e0:02:e7:2c:8b:b8:22:48:fd:4f:ef:c0:25:78:69 (ECDSA)
+|_  256 53:53:e9:5a:34:80:e5:77:96:e5:7a:e2:bf:4a:54:e4 (ED25519)
+1337/tcp open  http    Apache httpd 2.4.41 ((Ubuntu))
+| http-cookie-flags: 
+|   /: 
+|     PHPSESSID: 
+|_      httponly flag not set
+|_http-title: Login
+|_http-server-header: Apache/2.4.41 (Ubuntu)
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+
+Found login page on port 1337; edited Etc/Hosts to include 'hammer.thm'; I will need username and password
+
+Checked Source code: Found a note on naming convention, basically, directories will start with hmr_directory name here.
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="/hmr_css/bootstrap.min.css" rel="stylesheet">
+	<!-- Dev Note: Directory naming convention must be hmr_DIRECTORY_NAME -->
+
+Using ffuf, which is a web fuzzing tool written in go. I'll enumerate sub directories starting with 'hmr_'
+
+Running: ffuf -w /usr/share/wordlists/SecLists/Discovery/Web-Content/common.txt -u http://hammer.thm:1337/hmr_FUZZ
+
+
+       /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://hammer.thm:1337/hmr_FUZZ
+ :: Wordlist         : FUZZ: /usr/share/wordlists/SecLists/Discovery/Web-Content/common.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+css                     [Status: 301, Size: 317, Words: 20, Lines: 10, Duration: 0ms]
+images                  [Status: 301, Size: 320, Words: 20, Lines: 10, Duration: 0ms]
+js                      [Status: 301, Size: 316, Words: 20, Lines: 10, Duration: 0ms]
+logs                    [Status: 301, Size: 318, Words: 20, Lines: 10, Duration: 0ms]
+:: Progress: [4655/4655] :: Job [1/1] :: 51 req/sec :: Duration: [0:00:04] :: Errors: 0 ::
+
+
+Visiting http://hammer.thm:1337/hmr_logs:
+
+Shows a web directory with 'error.logs'
+
+
+Possible usernames: tester@hammer.thm
+
+Entering username into forgot password, it accepts and tells me to enter a 4-digit code...
